@@ -1,3 +1,4 @@
+// TODO: move fonts and display global variable to this file
 
 void display_init() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c);
@@ -14,8 +15,8 @@ void display_draw() {
   display.setCursor(0,0);
   switch (main_state) {
     case DB_BIGNUM:
-      display.print("dB");
       display_draw_db_bignum();
+      display.print("dB");
       break;
     default:
       display.print("UNKNOWN");
@@ -24,6 +25,8 @@ void display_draw() {
 }
 
 void display_draw_db_bignum() {
+  // TODO: what does the bigger size of the normal text size look like?
+  // TODO: refactor this to draw arbitrary bignums
   display.setFont(&FreeMono18pt7b);
   display.setCursor(20, 50);
   float temp_db = level_to_db((peak_l + peak_r) / 2.0);
