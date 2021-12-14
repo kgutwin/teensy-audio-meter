@@ -1,6 +1,9 @@
 IntervalTimer ledsTimer;
 uint16_t leds_columns[4];
 
+// TODO: create macro for LEDS_WRITE_BIT() for consistency
+// TODO: check on those delayMicroseconds(), do we need them? What speed are we seeing?
+
 #define LEDS_CLOCK()       \
   delayMicroseconds(1);    \
   digitalWrite(SR_CLK, 1); \
