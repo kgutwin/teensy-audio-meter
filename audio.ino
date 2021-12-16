@@ -10,13 +10,18 @@ AudioAnalyzeRMS          rms2;           //xy=432,387
 AudioAnalyzePeak         peak1;          //xy=435,185
 AudioAnalyzePeak         peak2;          //xy=435,340
 AudioAnalyzeRMS          rms1;           //xy=436,228
+//AudioAnalyzeFFT1024      fft1024;
 AudioOutputPT8211        pt8211_1;       //xy=464,286
+//AudioMixer4              mixer1;
 AudioConnection          patchCord1(usb1, 0, pt8211_1, 0);
 AudioConnection          patchCord2(usb1, 0, peak1, 0);
 AudioConnection          patchCord3(usb1, 0, rms1, 0);
 AudioConnection          patchCord4(usb1, 1, pt8211_1, 1);
 AudioConnection          patchCord5(usb1, 1, peak2, 0);
 AudioConnection          patchCord6(usb1, 1, rms2, 0);
+//AudioConnection          patchCord7(usb1, 0, mixer1, 0);
+//AudioConnection          patchCord8(usb1, 1, mixer1, 1);
+//AudioConnection          patchCord9(mixer1, fft1024);
 // GUItool: end automatically generated code
 
 #define HOLD_MILLIS  4000

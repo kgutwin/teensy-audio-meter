@@ -43,6 +43,52 @@ void display_draw() {
   display.display();
 }
 
+
+void display_draw_infinity(int16_t x0, int16_t y0, int16_t r, int16_t w, uint16_t color) {
+  int16_t f = 1 - r;
+  int16_t ddF_x = 1;
+  int16_t ddF_y = -2 * r;
+  int16_t x = 0;
+  int16_t y = r;
+
+  display.startWrite();
+  display.writePixel(x0, y0 + r, color);
+  display.writePixel(x0, y0 - r, color);
+  display.writePixel(x0 - r, y0, color);
+  display.writePixel(x0 + r + w, y0, color);
+  display.writePixel(x0 + w, y0 + r, color);
+  display.writePixel(x0 + w, y0 - r, color);
+
+  while (x < y) {
+    if (f >= 0) {
+      y--;
+      ddF_y += 2;
+      f += ddF_y;
+    }
+    x++;
+    ddF_x += 2;
+    f += ddF_x;
+
+    display.writePixel(x0 + x, y0 + y, color);
+    display.writePixel(x0 - x, y0 + y, color);
+    display.writePixel(x0 + x, y0 - y, color);
+    display.writePixel(x0 - x, y0 - y, color);
+    display.writePixel(x0 - y, y0 + x, color);
+    display.writePixel(x0 - y, y0 - x, color);
+
+    display.writePixel(x0 + x + w, y0 + y, color);
+    display.writePixel(x0 - x + w, y0 + y, color);
+    display.writePixel(x0 + x + w, y0 - y, color);
+    display.writePixel(x0 - x + w, y0 - y, color);
+    display.writePixel(x0 + y + w, y0 - x, color);
+    display.writePixel(x0 + y + w, y0 + x, color);
+  }
+  display.writeLine(x0 + x, y0 + y, x0 + w - x, y0 - y, color);
+  display.writeLine(x0 + x, y0 - y, x0 + w - x, y0 + y, color);
+  display.endWrite();
+}
+
+
 void display_draw_db_bignum() {
   // TODO: what does the bigger size of the normal text size look like?
   // TODO: refactor this to draw arbitrary bignums
@@ -50,7 +96,9 @@ void display_draw_db_bignum() {
   display.setCursor(20, 50);
   float temp_db = level_to_db((peak_l + peak_r) / 2.0);
   if (temp_db == -INFINITY) {
-    display.print("  -oo");
+    //display.print("  -oo");
+    display.print("  -");
+    display_draw_infinity(94, 41, 9, 18, WHITE);
   } else {
     if (temp_db > -10.0) display.print(" ");
     display.print(temp_db, 1);
