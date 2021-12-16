@@ -22,6 +22,7 @@ enum {
   DB_BIGNUM,
 } main_state;
 
+bool audio_connected;
 
 float level_l;
 float level_r;

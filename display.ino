@@ -25,15 +25,20 @@ void display_init() {
 
 void display_draw() {
   display.clearDisplay();
-  display.setFont();
-  display.setCursor(0,0);
   switch (main_state) {
     case DB_BIGNUM:
       display_draw_db_bignum();
+      display.setFont();
+      display.setCursor(0,0);
       display.print("dB");
       break;
     default:
       display.print("UNKNOWN");
+  }
+  if (! audio_connected) {
+    display.setFont();
+    display.setCursor(56, 0);
+    display.print("DISCONNECTED");
   }
   display.display();
 }

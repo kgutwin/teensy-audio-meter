@@ -37,6 +37,9 @@ void audio_refresh_data() {
     level_l = peak1.read();
     //level_r = rms2.read();
     level_r = peak2.read();
+    audio_connected = 1;
+  } else {
+    audio_connected = 0;
   }
 
   peak_l = max(peak_l, level_l);
