@@ -1,8 +1,28 @@
 IntervalTimer ledsTimer;
+/*
+ * The LED column display consists of a pair of 8-bit shift registers configured such
+ * that the first 11 bits control the X coordinate and the next 4 bits control
+ * the Y coordinate of a 2D grid.
+ * 
+ * Data is clocked into the shift registers serially, least significant bit first.
+ * The first bit is always zero since it is not connected to anything; followed next
+ * by the four bits of the Y coordinate, and finally the 11 bits of the X coordinate.
+ * Once all 16 bits are in, the RCK signal is asserted, which releases the data to
+ * the output latches and the LEDs can light.
+ * 
+ * Each of the four Y coordinate values is displayed one at a time; the display
+ * cycle time is fast enough to minimize flicker (currently set at 4ms per part).
+ * Refresh is handled by the IntervalTimer library which is interrupt-driven, so
+ * display refresh is not affected by timing jitter in the main loop.
+ */
+
+// Global variable storing the currently displayed LED columns.
 uint16_t leds_columns[4];
 
-// TODO: create macro for LEDS_WRITE_BIT() for consistency
 // TODO: check on those delayMicroseconds(), do we need them? What speed are we seeing?
+
+#define LEDS_WRITE_BIT(v)  \
+  digitalWrite(SR_SER, (v));
 
 #define LEDS_CLOCK()       \
   delayMicroseconds(1);    \
@@ -20,35 +40,34 @@ uint16_t leds_columns[4];
 
 void leds_init() {
   // clock in 17 zero bits to clear the screen
-  digitalWrite(SR_SER, 0);
+  LEDS_WRITE_BIT(0);
   for (int i=0; i<17; i++) {
     LEDS_CLOCK();
   }
   LEDS_SHOW();
-
-  leds_columns[0] = 0x0000;
-  leds_columns[1] = 0x01ff;
-  leds_columns[2] = 0x0000;
-  leds_columns[3] = 0x007f;
   
   ledsTimer.begin(leds_refresh, 4000);
 }
 
+/*
+ * Refresh the LEDs by displaying a new column. This function is called by the
+ * IntervalTimer set up in leds_init() and displays one new column each time it is called.
+ */
 void leds_refresh() {
   static uint8_t channel = 0;
   uint16_t column = leds_columns[channel];
 
   // first bit ignored
-  digitalWrite(SR_SER, 0);
+  LEDS_WRITE_BIT(0);
   LEDS_CLOCK();
   // channel select
   for (int i=3; i>=0; i--) {
-    digitalWrite(SR_SER, i == channel);
+    LEDS_WRITE_BIT(i == channel);
     LEDS_CLOCK();
   }
   // column
   for (int i=0; i<11; i++) {
-    digitalWrite(SR_SER, column & 1);
+    LEDS_WRITE_BIT(column & 1);
     LEDS_CLOCK();
     column >>= 1;
   }
@@ -57,6 +76,7 @@ void leds_refresh() {
   channel = (channel + 1) % 4;
 }
 
+// Mapping of dB thresholds to LEDs. This is taken from the LED bargraphs on the X32 console.
 const float leds_vals[] = {
    0.0,  
   -1.0,  -2.0,  -3.0,  -4.0,  -6.0,  -8.0, -10.0, -12.0, -15.0, -18.0,

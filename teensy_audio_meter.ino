@@ -1,15 +1,5 @@
 #include "math.h"
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include <Fonts/FreeMono18pt7b.h> // for large number display
-#include <Fonts/Picopixel.h>      // good for small (5px high)
-// The default font should be good for drawing basic stuff
 
-#if (SSD1306_LCDHEIGHT != 64)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-#endif
 
 // The following are all physical pin numbers
 #define PT8211_WS  20  // A6
@@ -26,9 +16,6 @@
 #define SR_CLK     13  // SCK
 #define SR_SER     11  // DOUT
 #define SR_RCK     8   // TX3
-
-
-Adafruit_SSD1306 display(2); // in fact, the reset pin is not there
 
 
 enum {
@@ -65,24 +52,20 @@ void setup() {
 
   main_state = DB_BIGNUM;
 
-  //leds_update();
-
 }
 
+elapsedMillis fps;
+
 void loop() {
-  audio_refresh_data();
+  if (fps > 32) {
+    fps = 0;
+    audio_refresh_data();
   
-  display_draw();
-  /*
-  float v = abs(1600 - ((long) millis() % 3200)) / 2000.0;
-  temp_level_l = v;
-  temp_level_r = max(0, v - 0.1);
-  temp_peak_l = min(temp_level_l + 0.15, 1.0);
-  temp_peak_r = min(temp_level_r + 0.15, 1.0);
-  */
-  leds_set_value(
-    level_to_db(level_l), level_to_db(level_r),
-    level_to_db(peak_l), level_to_db(peak_r)
-  );
-  delay(32 - (millis() % 32));
+    display_draw();
+
+    leds_set_value(
+      level_to_db(level_l), level_to_db(level_r),
+      level_to_db(peak_l), level_to_db(peak_r)
+    );
+  }
 }

@@ -1,4 +1,18 @@
-// TODO: move fonts and display global variable to this file
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Fonts/FreeMono18pt7b.h> // for large number display
+#include <Fonts/Picopixel.h>      // good for small (5px high)
+// The default font should be good for drawing basic stuff
+
+#if (SSD1306_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
+
+
+Adafruit_SSD1306 display(2); // in fact, the reset pin is not connected
+
 
 void display_init() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c);
