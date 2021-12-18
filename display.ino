@@ -13,6 +13,7 @@
 
 Adafruit_SSD1306 display(2); // in fact, the reset pin is not connected
 
+float display_fft_db[16];
 
 void display_init() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c);
@@ -24,19 +25,29 @@ void display_init() {
 }
 
 void display_draw() {
+  // TODO: add display timeout that checks peak_l/peak_r
   display.clearDisplay();
+  const char* screen_title = "";
   switch (main_state) {
     case DB_BIGNUM:
-      display_draw_db_bignum();
-      display.setFont();
-      display.setCursor(0,0);
-      display.print("dB");
+      screen_title = "dB";
+      display_draw_db_bignum(level_to_db((peak_l + peak_r) / 2.0));
+      break;
+    case FFT_BARS:
+      screen_title = "Spectrum";
+      display_update_fft_bars();
+      display_draw_bars_db(display_fft_db, 16, -35.0);
+      //display_draw_numbers(fft_level, 16);
+      //display_draw_db_bignum(fft_level[4]);
       break;
     default:
-      display.print("UNKNOWN");
+      screen_title = "UNKNOWN";
   }
+  display.setFont();
+  display.setCursor(0, 0);
+  display.setTextColor(WHITE, BLACK);
+  display.print(screen_title);
   if (! audio_connected) {
-    display.setFont();
     display.setCursor(56, 0);
     display.print("DISCONNECTED");
   }
@@ -89,19 +100,79 @@ void display_draw_infinity(int16_t x0, int16_t y0, int16_t r, int16_t w, uint16_
 }
 
 
-void display_draw_db_bignum() {
-  // TODO: what does the bigger size of the normal text size look like?
-  // TODO: refactor this to draw arbitrary bignums
+void display_draw_db_bignum(float db) {
   display.setFont(&FreeMono18pt7b);
   display.setCursor(20, 50);
-  float temp_db = level_to_db((peak_l + peak_r) / 2.0);
-  if (temp_db == -INFINITY) {
+  if (db == -INFINITY) {
     //display.print("  -oo");
     display.print("  -");
-    display_draw_infinity(94, 41, 9, 18, WHITE);
+    display_draw_infinity(94, 41, 8, 20, WHITE);
   } else {
-    if (temp_db > -10.0) display.print(" ");
-    display.print(temp_db, 1);
+    if (db > -10.0) display.print(" ");
+    display.print(db, 1);
+  }
+}
+
+
+void display_draw_numbers(float* values, int n_values) {
+  display.setCursor(0, 10);
+  for (int i=0; i<(n_values / 4); i++) {
+    for (int j=0; j<4; j++) {
+      display.print(values[i*3 + j], 2);
+      display.print(" ");
+    }
+    display.print("\n");
+  }
+}
+
+void display_draw_bars_db(float* dbs, int num_values, const float lowest_db) {
+  const int bar_width = display.width() / num_values;
+  const int bar_scale_h = display.height();
+
+  const int num_lines = 6;
+  const int line_height = display.height() / num_lines;
+
+  for (int i=0; i<num_values; i++) {
+    int bar_height = (max(0, dbs[i] - lowest_db) / -lowest_db) * bar_scale_h;
+    
+    display.fillRect(
+      i * bar_width, display.height() - bar_height,
+      bar_width - 1, bar_height,
+      WHITE
+    );
+    
+    // draw pixels for horizontal lines
+    for (int j=0; j<num_lines; j++) {
+      display.drawPixel(
+        (i * bar_width) + (bar_width - 1), 
+        (j * line_height), WHITE
+      );
+    }
+  }
+
+  // draw db scale
+  display.setFont();
+  display.setTextColor(WHITE);
+  for (int i=1; i<num_lines; i++) {
+    display.setCursor(0, i*line_height);
+    display.print((lowest_db / num_lines) * i, 0);
+  }
+}
+
+#define DECAY_RATE_DB_PER_MSEC  (12.0 / 1000.0)
+elapsedMillis display_fft_bars_timer;
+
+void display_update_fft_bars() {
+  const float db_decay = display_fft_bars_timer * DECAY_RATE_DB_PER_MSEC;
+  display_fft_bars_timer = 0;
+  
+  for (int i=0; i<16; i++) {
+    float instant_db = level_to_db(fft_level[i]);
+    if (instant_db >= display_fft_db[i]) {
+      display_fft_db[i] = instant_db;
+    } else {
+      display_fft_db[i] -= db_decay;
+    }
   }
 }
 
