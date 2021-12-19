@@ -11,6 +11,8 @@
 #endif
 
 
+
+
 Adafruit_SSD1306 display(2); // in fact, the reset pin is not connected
 
 float display_fft_db[16];
@@ -37,8 +39,10 @@ void display_draw() {
       screen_title = "Spectrum";
       display_update_fft_bars();
       display_draw_bars_db(display_fft_db, 16, -35.0);
-      //display_draw_numbers(fft_level, 16);
-      //display_draw_db_bignum(fft_level[4]);
+      break;
+    case STEREO_STEREO:
+      screen_title = "Stereo";
+      display_draw_stereo();
       break;
     default:
       screen_title = "UNKNOWN";
@@ -174,5 +178,48 @@ void display_update_fft_bars() {
       display_fft_db[i] -= db_decay;
     }
   }
+}
+
+
+void display_draw_stereo() {
+  // correlation bar is 60 px wide with 2px margin on either side
+  int bar_width = stereo_correlation * 30;
+  if (bar_width == 0) {
+    display.drawFastVLine(32, 28, 8, WHITE);
+  } else if (bar_width < 0) {
+    display.fillRect(32 + bar_width, 28, -bar_width, 8, WHITE);
+  } else {
+    display.fillRect(32, 28, bar_width, 8, WHITE);
+  }
+
+  display.drawFastVLine(32, 23, 4, WHITE);
+  display.drawFastVLine(32, 38, 4, WHITE);
+  display.drawFastVLine(62, 23, 4, WHITE);
+  display.drawFastVLine(62, 38, 4, WHITE);
+  display.drawFastVLine(2, 23, 4, WHITE);
+  display.drawFastVLine(2, 38, 4, WHITE);
+  
+  display.setFont();
+  display.setTextColor(WHITE);
+  display.setCursor(18, 50);
+  if (stereo_correlation >= 0.0) display.print(" ");
+  display.print(stereo_correlation, 2); 
+
+  // scatter
+  for (int i=8; i<64; i+=4) {
+    display.drawPixel(64 + i, i, WHITE);
+    display.drawPixel(128 - i, i, WHITE);
+  }
+  for (int i=0; i<AUDIO_BLOCK_SAMPLES; i++) {
+    display.drawPixel(
+      stereo_px_r[i] - stereo_px_l[i] + 96, 
+      stereo_px_r[i] + stereo_px_l[i] + 32, 
+      WHITE
+    );
+  }
+  display.setCursor(64, 0);
+  display.print("L");
+  display.setCursor(122, 0);
+  display.print("R");
 }
 

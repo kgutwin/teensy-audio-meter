@@ -24,6 +24,7 @@ Bounce button_m = Bounce(SW_3, 10);
 enum {
   DB_BIGNUM,
   FFT_BARS,
+  STEREO_STEREO,
   MAIN_STATE_MAX_ITEMS   // must be last!
 } main_state;
 
@@ -35,6 +36,9 @@ float level_r;
 float peak_l;
 float peak_r;
 float fft_level[16];
+float stereo_correlation;
+int8_t stereo_px_r[AUDIO_BLOCK_SAMPLES];
+int8_t stereo_px_l[AUDIO_BLOCK_SAMPLES];
 
 float level_to_db(float lvl) {
   return 20.0 * log10f(lvl);
