@@ -14,6 +14,7 @@ AudioOutputPT8211        pt8211_1;       //xy=464,286
 AudioMixer4              mixer1;
 AudioAnalyzeFFT1024      fft1024;
 AudioAnalyzeStereo       stereo1;
+//AudioAnalyzeLUFS         lufs1;
 
 AudioConnection          patchCord1(usb1, 0, pt8211_1, 0);
 AudioConnection          patchCord2(usb1, 0, peak1, 0);
@@ -26,6 +27,8 @@ AudioConnection          patchCord8(usb1, 1, mixer1, 1);
 AudioConnection          patchCord9(mixer1, fft1024);
 AudioConnection          patchCord10(usb1, 0, stereo1, 0);
 AudioConnection          patchCord11(usb1, 1, stereo1, 1);
+//AudioConnection          patchCord12(usb1, 0, lufs1, 0);
+//AudioConnection          patchCord13(usb1, 1, lufs1, 1);
 // GUItool: end automatically generated code
 
 #define HOLD_MILLIS  4000
@@ -39,6 +42,7 @@ void audio_setup() {
   level_l = level_r = 0.0;
   peak_l = peak_r = 0.0;
   stereo_correlation = 0.0;
+  lufs_momentary = -INFINITY;
 }
 
 
@@ -100,5 +104,12 @@ void audio_refresh_data() {
     stereo_correlation = stereo1.readCorrelation();
     stereo1.readScatter(stereo_px_l, stereo_px_r, AUDIO_BLOCK_SAMPLES);
   }
+
+  /*
+   * LUFS (loudness)
+   */
+  //if (lufs1.available()) {
+  //  lufs_momentary = lufs1.readLoudnessMomentary();
+  //}
 }
 

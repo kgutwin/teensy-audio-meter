@@ -40,6 +40,10 @@ void display_draw() {
       display_update_fft_bars();
       display_draw_bars_db(display_fft_db, 16, -35.0);
       break;
+    case LUFS_BIGNUM:
+      screen_title = "LUFS";
+      display_draw_db_bignum(lufs_momentary);
+      break;
     case STEREO_STEREO:
       screen_title = "Stereo";
       display_draw_stereo();
