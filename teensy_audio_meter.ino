@@ -78,7 +78,7 @@ void loop() {
     }
   }
   
-  if (ms_per_frame > 24) {
+  if (ms_per_frame > 42) {
     ms_per_frame = 0;
     audio_refresh_data();
   

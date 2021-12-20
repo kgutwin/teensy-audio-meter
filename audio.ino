@@ -4,6 +4,8 @@
 //#include <SD.h>
 //#include <SerialFlash.h>
 
+#define WITH_LUFS
+
 // GUItool: begin automatically generated code
 AudioInputUSB            usb1;           //xy=151,285
 AudioAnalyzeRMS          rms2;           //xy=432,387
@@ -14,7 +16,9 @@ AudioOutputPT8211        pt8211_1;       //xy=464,286
 AudioMixer4              mixer1;
 AudioAnalyzeFFT1024      fft1024;
 AudioAnalyzeStereo       stereo1;
-//AudioAnalyzeLUFS         lufs1;
+#ifdef WITH_LUFS
+AudioAnalyzeLUFS         lufs1;
+#endif
 
 AudioConnection          patchCord1(usb1, 0, pt8211_1, 0);
 AudioConnection          patchCord2(usb1, 0, peak1, 0);
@@ -27,8 +31,10 @@ AudioConnection          patchCord8(usb1, 1, mixer1, 1);
 AudioConnection          patchCord9(mixer1, fft1024);
 AudioConnection          patchCord10(usb1, 0, stereo1, 0);
 AudioConnection          patchCord11(usb1, 1, stereo1, 1);
-//AudioConnection          patchCord12(usb1, 0, lufs1, 0);
-//AudioConnection          patchCord13(usb1, 1, lufs1, 1);
+#ifdef WITH_LUFS
+AudioConnection          patchCord12(usb1, 0, lufs1, 0);
+AudioConnection          patchCord13(usb1, 1, lufs1, 1);
+#endif
 // GUItool: end automatically generated code
 
 #define HOLD_MILLIS  4000
@@ -108,8 +114,10 @@ void audio_refresh_data() {
   /*
    * LUFS (loudness)
    */
-  //if (lufs1.available()) {
-  //  lufs_momentary = lufs1.readLoudnessMomentary();
-  //}
+#ifdef WITH_LUFS
+  if (lufs1.available()) {
+    lufs_momentary = lufs1.readLoudnessMomentary();
+  }
+#endif
 }
 

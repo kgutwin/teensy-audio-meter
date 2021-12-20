@@ -122,6 +122,12 @@ void display_draw_db_bignum(float db) {
 }
 
 
+void display_draw_hexnum(uint32_t v) {
+  display.setCursor(20, 50);
+  display.print(v, HEX);
+}
+
+
 void display_draw_numbers(float* values, int n_values) {
   display.setCursor(0, 10);
   for (int i=0; i<(n_values / 4); i++) {
@@ -150,7 +156,7 @@ void display_draw_bars_db(float* dbs, int num_values, const float lowest_db) {
     );
     
     // draw pixels for horizontal lines
-    for (int j=0; j<num_lines; j++) {
+    for (int j=1; j<num_lines; j++) {
       display.drawPixel(
         (i * bar_width) + (bar_width - 1), 
         (j * line_height), WHITE
