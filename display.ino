@@ -33,14 +33,15 @@ void display_draw() {
   switch (main_state) {
     case DB_BIGNUM:
       screen_title = "dB";
-      display_draw_db_bignum(level_to_db((peak_l + peak_r) / 2.0));
+      //display_draw_db_bignum(level_to_db((peak_l + peak_r) / 2.0));
+      display_draw_db_bignum(level_to_db(max(peak_l, peak_r)));
       break;
     case FFT_BARS:
       screen_title = "Spectrum";
       display_update_fft_bars();
       display_draw_bars_db(display_fft_db, 16, -35.0);
       break;
-    case LUFS_BIGNUM:
+    case LUFS_M_BIGNUM:
       screen_title = "LUFS";
       display_draw_db_bignum(lufs_momentary);
       break;

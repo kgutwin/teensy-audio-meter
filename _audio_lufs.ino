@@ -5,7 +5,7 @@ class AudioAnalyzeLUFS : public AudioStream
 {
 public:
   AudioAnalyzeLUFS() : AudioStream(2, inputQueueArray) {
-    sts = ebur128_init(2, AUDIO_SAMPLE_RATE, EBUR128_MODE_SAMPLE_PEAK);
+    sts = ebur128_init(2, AUDIO_SAMPLE_RATE, EBUR128_MODE_M);
     has_samples = false;
   }
   void update(void) {
@@ -38,6 +38,7 @@ public:
     if (sts == NULL) return -1.1;
     double out = -22.2;
     ebur128_loudness_momentary(sts, &out);
+    if (out < -100) out = -INFINITY;
     has_samples = false;
     return out;
   }

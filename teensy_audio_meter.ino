@@ -24,7 +24,7 @@ Bounce button_m = Bounce(SW_3, 10);
 enum {
   DB_BIGNUM,
   FFT_BARS,
-  LUFS_BIGNUM,
+  LUFS_M_BIGNUM,
   STEREO_STEREO,
   MAIN_STATE_MAX_ITEMS   // must be last!
 } main_state;
