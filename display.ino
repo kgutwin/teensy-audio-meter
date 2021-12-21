@@ -16,6 +16,7 @@
 Adafruit_SSD1306 display(2); // in fact, the reset pin is not connected
 
 float display_fft_db[16];
+float display_lufs_db[16];
 
 void display_init() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3c);
@@ -24,10 +25,16 @@ void display_init() {
   display.setTextColor(WHITE);
   display.setTextSize(1);
 
+  for (int i=0; i<16; i++) {
+    display_lufs_db[i] = -INFINITY;
+    display_fft_db[i] = -INFINITY;
+  }
 }
 
 void display_draw() {
   // TODO: add display timeout that checks peak_l/peak_r
+  display_update_lufs_bars();
+  display_update_fft_bars();
   display.clearDisplay();
   const char* screen_title = "";
   switch (main_state) {
@@ -38,12 +45,15 @@ void display_draw() {
       break;
     case FFT_BARS:
       screen_title = "Spectrum";
-      display_update_fft_bars();
       display_draw_bars_db(display_fft_db, 16, -35.0);
       break;
     case LUFS_M_BIGNUM:
       screen_title = "LUFS";
       display_draw_db_bignum(lufs_momentary);
+      break;
+    case LUFS_M_BARS:
+      screen_title = "LUFS";
+      display_draw_bars_db(display_lufs_db, 16, -35.0);
       break;
     case STEREO_STEREO:
       screen_title = "Stereo";
@@ -64,7 +74,8 @@ void display_draw() {
 }
 
 
-void display_draw_infinity(int16_t x0, int16_t y0, int16_t r, int16_t w, uint16_t color) {
+void display_draw_infinity(int16_t x0, int16_t y0, int16_t r, 
+                           int16_t w, uint16_t color) {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
@@ -189,6 +200,21 @@ void display_update_fft_bars() {
       display_fft_db[i] -= db_decay;
     }
   }
+}
+
+
+elapsedMillis display_lufs_bars_timer;
+
+void display_update_lufs_bars() {
+  if (display_lufs_bars_timer > 1000) {
+    display_lufs_bars_timer = 0;
+
+    for (int i=1; i<16; i++) {
+      display_lufs_db[i-1] = display_lufs_db[i];
+    }
+    display_lufs_db[15] = -INFINITY;
+  }
+  display_lufs_db[15] = max(lufs_momentary, display_lufs_db[15]);
 }
 
 

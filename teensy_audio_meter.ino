@@ -25,6 +25,7 @@ enum {
   DB_BIGNUM,
   FFT_BARS,
   LUFS_M_BIGNUM,
+  LUFS_M_BARS,
   STEREO_STEREO,
   MAIN_STATE_MAX_ITEMS   // must be last!
 } main_state;
