@@ -5,13 +5,17 @@
 //#include <SerialFlash.h>
 
 #define WITH_LUFS
+#undef WITH_SINE
 
-// GUItool: begin automatically generated code
+#ifdef WITH_SINE
+AudioSynthWaveformSine   sine1;
+#else
 AudioInputUSB            usb1;           //xy=151,285
-AudioAnalyzeRMS          rms2;           //xy=432,387
+#endif
 AudioAnalyzePeak         peak1;          //xy=435,185
 AudioAnalyzePeak         peak2;          //xy=435,340
-AudioAnalyzeRMS          rms1;           //xy=436,228
+AudioMixer4              mixer2;
+AudioMixer4              mixer3;
 AudioOutputPT8211        pt8211_1;       //xy=464,286
 AudioMixer4              mixer1;
 AudioAnalyzeFFT1024      fft1024;
@@ -20,30 +24,50 @@ AudioAnalyzeStereo       stereo1;
 AudioAnalyzeLUFS         lufs1;
 #endif
 
-AudioConnection          patchCord1(usb1, 0, pt8211_1, 0);
-AudioConnection          patchCord2(usb1, 0, peak1, 0);
-AudioConnection          patchCord3(usb1, 0, rms1, 0);
-AudioConnection          patchCord4(usb1, 1, pt8211_1, 1);
-AudioConnection          patchCord5(usb1, 1, peak2, 0);
-AudioConnection          patchCord6(usb1, 1, rms2, 0);
-AudioConnection          patchCord7(usb1, 0, mixer1, 0);
-AudioConnection          patchCord8(usb1, 1, mixer1, 1);
-AudioConnection          patchCord9(mixer1, fft1024);
-AudioConnection          patchCord10(usb1, 0, stereo1, 0);
-AudioConnection          patchCord11(usb1, 1, stereo1, 1);
-#ifdef WITH_LUFS
-AudioConnection          patchCord12(usb1, 0, lufs1, 0);
-AudioConnection          patchCord13(usb1, 1, lufs1, 1);
+#ifdef WITH_SINE
+AudioConnection patchCord1(sine1, 0, mixer2, 0);
+AudioConnection patchCord3(sine1, 0, peak1, 0);
+AudioConnection patchCord5(sine1, 0, mixer3, 0);
+AudioConnection patchCord7(sine1, 0, peak2, 0);
+AudioConnection patchCord9(sine1, 0, mixer1, 0);
+AudioConnection patchCord12(mixer3, 0, stereo1, 0);
+AudioConnection patchCord13(mixer3, 0, stereo1, 1);
+#else
+AudioConnection          patchCord1(usb1, 0, mixer2, 0);
+AudioConnection          patchCord3(usb1, 0, peak1, 0);
+AudioConnection          patchCord5(usb1, 1, mixer3, 0);
+AudioConnection          patchCord7(usb1, 1, peak2, 0);
+AudioConnection          patchCord9(usb1, 0, mixer1, 0);
+AudioConnection          patchCord10(usb1, 1, mixer1, 1);
+AudioConnection          patchCord12(usb1, 0, stereo1, 0);
+AudioConnection          patchCord13(usb1, 1, stereo1, 1);
 #endif
-// GUItool: end automatically generated code
+
+AudioConnection          patchCord2(mixer2, 0, pt8211_1, 0);
+AudioConnection          patchCord6(mixer3, 0, pt8211_1, 1);
+AudioConnection          patchCord11(mixer1, fft1024);
+
+#ifdef WITH_LUFS
+AudioConnection          patchCord14(usb1, 0, lufs1, 0);
+AudioConnection          patchCord15(usb1, 1, lufs1, 1);
+#endif
 
 #define HOLD_MILLIS  4000
 
 
 void audio_setup() {
-  AudioMemory(24);
+  AudioMemory(48);
+#ifdef WITH_SINE
+  sine1.amplitude(0.5);
+  sine1.frequency(500);
+#endif
   mixer1.gain(0, 0.5);
   mixer1.gain(1, 0.5);
+
+  //headphone_gain = 0.501187 / 2.0;  // -12.0 dB
+  headphone_gain = 0.015625;
+  mixer2.gain(0, headphone_gain);
+  mixer3.gain(0, headphone_gain);
   
   level_l = level_r = 0.0;
   peak_l = peak_r = 0.0;
@@ -52,13 +76,21 @@ void audio_setup() {
 }
 
 
+void audio_adjust_headphone_gain(float increase) {
+  headphone_gain *= increase;
+  mixer2.gain(0, headphone_gain);
+  mixer3.gain(0, headphone_gain);
+}
+
+
 void audio_refresh_data() {
   /*
    * Peak levels (dB meter)
    */
   static unsigned long last_hold = 0;
-  
+
   if (peak1.available() && peak2.available()) {
+    peak1.readSamples(&min_sample, &max_sample);
     //level_l = rms1.read();
     level_l = peak1.read();
     //level_r = rms2.read();
@@ -80,6 +112,7 @@ void audio_refresh_data() {
   /*
    * FFT (spectrum)
    */
+
   if (fft1024.available()) {
     // read the 512 FFT frequencies into 16 levels
     // music is heard in octaves, but the FFT data

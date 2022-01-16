@@ -1,4 +1,5 @@
 #include "math.h"
+#include <Audio.h>
 #include <Bounce.h>
 
 // The following are all physical pin numbers
@@ -6,11 +7,11 @@
 #define PT8211_BCK 21  // A7
 #define PT8211_DIN 7   // RX3
 
-#define SW_1       3   // Left
-#define SW_2       4   // Right
+#define SW_1       3   // Right
+#define SW_2       4   // Left
 #define SW_3       5   // Menu
-Bounce button_l = Bounce(SW_1, 10);
-Bounce button_r = Bounce(SW_2, 10);
+Bounce button_l = Bounce(SW_2, 10);
+Bounce button_r = Bounce(SW_1, 10);
 Bounce button_m = Bounce(SW_3, 10);
 
 #define D_SDA      18  // SDA0
@@ -27,6 +28,8 @@ enum {
   LUFS_M_BIGNUM,
   LUFS_M_BARS,
   STEREO_STEREO,
+  HEADPHONE_BIGNUM,
+  WAVE_WAVE,
   MAIN_STATE_MAX_ITEMS   // must be last!
 } main_state;
 
@@ -37,11 +40,16 @@ float level_l;
 float level_r;
 float peak_l;
 float peak_r;
+int16_t min_sample, max_sample;
 float fft_level[16];
 float stereo_correlation;
 int8_t stereo_px_r[AUDIO_BLOCK_SAMPLES];
 int8_t stereo_px_l[AUDIO_BLOCK_SAMPLES];
 float lufs_momentary;
+float headphone_gain;
+
+//#define BUTTON_GAIN_RATIO  1.412538   // 3 dB
+#define BUTTON_GAIN_RATIO  1.12202   // 1 dB
 
 float level_to_db(float lvl) {
   return 20.0 * log10f(lvl);
@@ -76,6 +84,16 @@ void loop() {
     if (button_m.fallingEdge()) {
       // TODO: implement this in a way that doesn't raise a compiler warning
       main_state = (main_state + 1) % MAIN_STATE_MAX_ITEMS;
+    }
+  }
+  if (button_l.update()) {
+    if (button_l.fallingEdge()) {
+      audio_adjust_headphone_gain(1 / BUTTON_GAIN_RATIO);
+    }
+  }
+  if (button_r.update()) {
+    if (button_r.fallingEdge()) {
+      audio_adjust_headphone_gain(BUTTON_GAIN_RATIO);
     }
   }
   

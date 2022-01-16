@@ -40,8 +40,9 @@ void display_draw() {
   switch (main_state) {
     case DB_BIGNUM:
       screen_title = "dB";
-      //display_draw_db_bignum(level_to_db((peak_l + peak_r) / 2.0));
-      display_draw_db_bignum(level_to_db(max(peak_l, peak_r)));
+      //display_draw_db_bignum(level_to_db((peak_l + peak_r) / 2.0));  // average
+      display_draw_db_bignum(level_to_db(max(peak_l, peak_r)));  // maximum
+      //display_draw_hexnum(min_sample, max_sample);  // raw digits
       break;
     case FFT_BARS:
       screen_title = "Spectrum";
@@ -58,6 +59,14 @@ void display_draw() {
     case STEREO_STEREO:
       screen_title = "Stereo";
       display_draw_stereo();
+      break;
+    case HEADPHONE_BIGNUM:
+      screen_title = "Phones";
+      display_draw_db_bignum(level_to_db(headphone_gain) + 36.1);
+      break;
+    case WAVE_WAVE:
+      screen_title = "Wave";
+      display_draw_waveform();
       break;
     default:
       screen_title = "UNKNOWN";
@@ -123,20 +132,26 @@ void display_draw_infinity(int16_t x0, int16_t y0, int16_t r,
 void display_draw_db_bignum(float db) {
   display.setFont(&FreeMono18pt7b);
   display.setCursor(20, 50);
-  if (db == -INFINITY) {
+  if (db <= -100.0) {
     //display.print("  -oo");
     display.print("  -");
     display_draw_infinity(94, 41, 8, 20, WHITE);
   } else {
-    if (db > -10.0) display.print(" ");
+    if (db > 0.0 && db < 10.0) {
+      display.print("  ");
+    } else if (db > -10.0 && !(db >= 100.0)) { 
+      display.print(" ");
+    }
     display.print(db, 1);
   }
 }
 
 
-void display_draw_hexnum(uint32_t v) {
-  display.setCursor(20, 50);
-  display.print(v, HEX);
+void display_draw_hexnum(uint32_t v1, uint32_t v2) {
+  display.setCursor(0, 32);
+  display.print(v1, HEX);
+  display.print("\n");
+  display.print(v2, HEX);
 }
 
 
@@ -258,5 +273,18 @@ void display_draw_stereo() {
   display.print("L");
   display.setCursor(122, 0);
   display.print("R");
+}
+
+void display_draw_waveform() {
+  // find the first zero crossing
+  int z = 0;
+  //for (z=1; z<AUDIO_BLOCK_SAMPLES; z++) {
+  //  if (stereo_px_r[z] >= 0 && stereo_px_r[z-1] < 0) break;
+  //}
+  for (int i=0; i<AUDIO_BLOCK_SAMPLES; i++) {
+    if (z+i < AUDIO_BLOCK_SAMPLES)
+      display.drawPixel(i, 32 - stereo_px_r[z+i], WHITE);
+    if (i % 8 == 0) display.drawPixel(i, 32, WHITE);
+  }
 }
 
